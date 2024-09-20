@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+    
+    <style>
+        body {
+            background-color: black;
+            font-family: monospace !important;
+            color: lime;
+            font-size: 16px;
+        }
+        #messages {
+            margin: 20px;
+        }
+        .error {
+            color: red;
+        }
+
+        button {
+            background-color: black;
+            color: lime;
+            border-bottom: 1px solid lime
+        }
+        input {
+            background-color: black;
+            color: lime;
+            border-bottom: 1px solid lime
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex; width: 100%; justify-content: center;" >
+
+        <input id="msg" type="text" placeholder="type message to send">
+        <button id="send">Send</button>
+    </div>
+    <div id="messages"></div>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        // Connect to the WebSocket server on localhost at port 8910
+        const socket = io('ws://localhost:8910');
+        const timestamp = () => new Date().toLocaleString("sv")    
+        // Get the 'messages' div to display messages
+        const messagesDiv = document.getElementById('messages');
+        const sendBtn = document.getElementById('send');
+        const sendMsg = document.getElementById('msg');
+
+        // Function to append a message to the messages div
+        function appendMessage(message, className = '') {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            if (className) {
+                messageElement.classList.add(className);
+            }
+            messagesDiv.appendChild(messageElement);
+        }
+
+        // Listen for 'message' events from the server
+        socket.on('connect', (data) => {
+            appendMessage(`${timestamp()} - Connected!`);
+        });
+
+        socket.on('message', (data) => {
+            appendMessage(`${timestamp()} - Message: ${data}`);
+        });
+
+        // Handle connection errors
+        socket.on('connect_error', (error) => {
+            appendMessage(`${timestamp()} - Connection error: ${error.message}`, 'error');
+        });
+
+        // Handle disconnections
+        socket.on('disconnect', () => {
+            appendMessage(`${timestamp()} - Disconnected from server`, 'error');
+        });
+
+        // Handle reconnection attempts
+        socket.on('reconnect', (attempt) => {
+            appendMessage(`${timestamp()} - Reconnected after ${attempt} attempts`);
+        });
+
+        // Handle reconnection errors
+        socket.on('reconnect_error', (error) => {
+            appendMessage(`${timestamp()} - Reconnection error: ${error.message}`, 'error');
+        });
+
+        sendBtn.addEventListener("click", () => {
+            
+            socket.emit('message', `${timestamp()} - ${sendMsg.value}`);
+        })
+
+    </script>
+
+</body>
+</html>
